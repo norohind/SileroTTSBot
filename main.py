@@ -1,19 +1,14 @@
 # -*- coding: utf-8 -*-
 import os
-import time
-
+from discord.ext import commands
 import discord
 import signal
 import asyncio
 from loguru import logger
+from DynamicCommandPrefix import dynamic_command_prefix
+import Observ
 
-import utils
-from TTSSilero import TTS
-from TTSSilero import Speakers
-from FFmpegPCMAudioModified import FFmpegPCMAudio
-from Cache import cache
 
-tts = TTS()
 """
 while msg := input('$ '):
     start = time.time()
@@ -23,7 +18,7 @@ while msg := input('$ '):
 """
 
 
-class DiscordTTSBot(discord.Client):
+class DiscordTTSBot(commands.Bot, Observ.Subject):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         signal.signal(signal.SIGTERM, self.shutdown)
@@ -37,61 +32,35 @@ class DiscordTTSBot(discord.Client):
     async def on_ready(self):
         logger.debug('Bot is ready')
 
-    async def on_message(self, message: discord.Message):
-        if message.author == self.user:
-            return
+    async def on_message(self, message: discord.Message) -> None:
+        await super(DiscordTTSBot, self).on_message(message)
+        if message.author.bot:  # because on_command_error will not be called if author is bot
+            # so it isn't a command, so, pass it next
+            await self.notify(message)
 
-        if not message.content.startswith('-'):
-            return
+    async def on_command_error(self, ctx: commands.Context, exception: commands.errors.CommandError) -> None:
+        if isinstance(exception, commands.errors.CommandNotFound):
+            ctx.message.content = ctx.message.content[len(ctx.prefix):]  # skip prefix
+            await self.notify(ctx.message)
 
-        if isinstance(message.channel, discord.TextChannel):
-            logger.info(f'Message: {message.content}')
-            user_voice_state = message.author.voice
-            if message.content.startswith('/exit'):
-                if message.guild.voice_client is not None:
-                    logger.debug(f'Disconnecting from voice channel')
-                    await message.guild.voice_client.disconnect(force=False)
-                    await message.channel.send(f"Left voice channel")
-                    return
-
-                else:
-                    await message.channel.send("I'm not in any voice channel")
-                    return
-
-            if user_voice_state is None:
-                await message.channel.send(f"You're not in a voice channel")
-                return
-
-            # noinspection PyTypeChecker
-            voice_client: discord.VoiceClient = message.guild.voice_client
-            if voice_client is None:
-                voice_client: discord.VoiceClient = await user_voice_state.channel.connect()
-
-            cached = cache.get(message.content)
-            if cached is not None:
-                wav_file_like_object = cached
-                logger.debug(f'Cache lookup for {message.content!r} successful')
-
-            else:
-                synthesis_start = time.time()
-                wav_file_like_object = tts.synthesize_text(message.content, seek=0)
-                logger.debug(f'Synthesis took {time.time() - synthesis_start} s')
-                cache.set(message.content, wav_file_like_object.read())
-                logger.debug(f'Set cache for {message.content!r}')
-                wav_file_like_object.seek(0)
-
-            sound_source = FFmpegPCMAudio(
-                wav_file_like_object.read(),
-                pipe=True
-            )
-            voice_client.play(sound_source, after=lambda e: logger.debug(f"Player done, {e=}"))
+        else:
+            raise exception
 
 
 intents = discord.Intents.default()
 intents.message_content = True
 
-discord_client = DiscordTTSBot(intents=intents)
+discord_client = DiscordTTSBot(command_prefix=dynamic_command_prefix, intents=intents)
+
+
+async def main():
+    for filename in os.listdir("./cogs"):
+        if filename.endswith(".py"):
+            logger.debug(f'Loading extension {filename}')
+            await discord_client.load_extension(f"cogs.{filename[:-3]}")
+
+    await discord_client.start(os.environ['DISCORD_TOKEN'])
 
 loop = asyncio.new_event_loop()
-loop.run_until_complete(discord_client.start(os.environ['DISCORD_TOKEN']))
+loop.run_until_complete(main())
 logger.debug('Shutdown completed')

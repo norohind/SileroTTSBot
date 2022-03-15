@@ -8,7 +8,7 @@ from .Speakers import Speakers
 from .multi_v2_package import TTSModelMulti_v2
 
 
-class TTS:
+class TTSSilero:
     def __init__(self, threads: int = 12):
         device = torch.device('cpu')
         torch.set_num_threads(threads)
@@ -25,8 +25,8 @@ class TTS:
 
         self.sample_rate = 16000
 
-    def synthesize_text(self, text: str, speaker: Speakers = Speakers.kseniya, seek: int = None) -> io.BytesIO:
-        return self.to_wav(self._synthesize_text(text, speaker), seek)
+    def synthesize_text(self, text: str, speaker: Speakers = Speakers.kseniya) -> bytes:
+        return self.to_wav(self._synthesize_text(text, speaker))
 
     def _synthesize_text(self, text: str, speaker: Speakers) -> list[torch.Tensor]:
         """
@@ -44,7 +44,7 @@ class TTS:
 
         return results_list
 
-    def to_wav(self, synthesized_text: list[torch.Tensor], seek: int = None) -> io.BytesIO:
+    def to_wav(self, synthesized_text: list[torch.Tensor]) -> bytes:
         res_io_stream = io.BytesIO()
 
         with contextlib.closing(wave.open(res_io_stream, 'wb')) as wf:
@@ -54,9 +54,8 @@ class TTS:
             for result in synthesized_text:
                 wf.writeframes((result * 32767).numpy().astype('int16'))
 
-        if type(seek) is int:
-            res_io_stream.seek(seek)
+        res_io_stream.seek(0)
 
-        return res_io_stream
+        return res_io_stream.read()
 
 
