@@ -43,6 +43,9 @@ class TTSCommands(commands.Cog, Observ.Observer):
         if message.author == self.bot.user:
             return
 
+        if message.author.bot:
+            return
+
         if not isinstance(message.channel, discord.TextChannel):
             return
 
