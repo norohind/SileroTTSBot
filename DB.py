@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import peewee
 
 database = peewee.SqliteDatabase('voice_cache.sqlite')
@@ -18,5 +20,16 @@ class Speaker(BaseModel):
     speaker = peewee.CharField()
 
 
+class SynthesisErrors(peewee.Model):
+    speaker = peewee.CharField()
+    text = peewee.TextField()
+    timestamp = peewee.DateTimeField(default=datetime.now)
+
+    class Meta:
+        database = database
+        primary_key = peewee.CompositeKey('speaker', 'text')
+
+
 Prefix.create_table()
 Speaker.create_table()
+SynthesisErrors.create_table()
