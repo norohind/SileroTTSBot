@@ -11,5 +11,5 @@ class cogErrorHandlers:
             await ctx.reply(str(error))
 
         else:
-            logger.exception(f'prefixConfiguration error occurred: ', exc_info=error)
+            logger.exception(f'Command error occurred: ', exc_info=error)
             await ctx.reply(f'Internal error occurred')
