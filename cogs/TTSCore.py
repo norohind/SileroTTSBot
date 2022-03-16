@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import asyncio
 import subprocess
 import time
 from collections import defaultdict
@@ -14,17 +13,17 @@ from TTSSilero import Speakers
 from FFmpegPCMAudioModified import FFmpegPCMAudio
 import Observ
 from cogErrorHandlers import cogErrorHandlers
+from SpeakersSettingsAdapterDiscord import speakers_settings_adapter, SpeakersSettingsAdapterDiscord
 
 
-class TTSCommands(commands.Cog, Observ.Observer):
-    DEFAULT_SPEAKER = Speakers.kseniya
-
+class TTSCore(commands.Cog, Observ.Observer):
     def __init__(self, bot: Union[commands.Bot, Observ.Subject]):
         self.bot = bot
         self.cog_command_error = cogErrorHandlers.missing_argument_handler
         self.bot.subscribe(self)  # subscribe for messages that aren't commands
         self.tts = TTSSileroCached()
         self.tts_queues: dict[int, list[discord.AudioSource]] = defaultdict(list)
+        self.speakers_adapter: SpeakersSettingsAdapterDiscord = speakers_settings_adapter
 
     @commands.command('exit')
     async def leave_voice(self, ctx: Context):
@@ -65,7 +64,7 @@ class TTSCommands(commands.Cog, Observ.Observer):
         if voice_client is None:
             voice_client: discord.VoiceClient = await user_voice_state.channel.connect()
 
-        speaker: Speakers = await self._get_speaker(message.guild.id)
+        speaker: Speakers = self.speakers_adapter.get_speaker(message.guild.id, message.author.id)
 
         # check if message will fail on synthesis
         if DB.SynthesisErrors.select()\
@@ -93,37 +92,6 @@ class TTSCommands(commands.Cog, Observ.Observer):
             await message.channel.send(f'Internal error')
             DB.SynthesisErrors.create(speaker=speaker.value, text=message.content)
 
-    @commands.command('getAllSpeakers')
-    async def get_speakers(self, ctx: Context):
-        speakers = '\n'.join([speaker.name for speaker in Speakers])
-
-        await ctx.send(f"```\n{speakers}```")
-
-    @commands.command('setSpeaker')
-    async def set_speaker(self, ctx: Context, speaker: str):
-        try:
-            checked_speaker: Speakers = Speakers(speaker)
-            DB.Speaker.replace(server_id=ctx.guild.id, speaker=checked_speaker.value).execute()
-            await ctx.send(f'Successfully set speaker to `{checked_speaker.value}`')
-
-        except KeyError:
-            await ctx.send(f"Provided speaker is invalid, provided speaker must be from `getAllSpeakers` command")
-
-    @commands.command('getSpeaker')
-    async def get_speaker(self, ctx: Context):
-        speaker = await self._get_speaker(ctx.guild.id)
-
-        await ctx.send(f'Your current speaker is `{speaker.value}`')
-
-    async def _get_speaker(self, guild_id: int) -> Speakers:
-        try:
-            speaker = Speakers(DB.Speaker[guild_id].speaker)
-
-        except DB.peewee.DoesNotExist:
-            speaker = self.DEFAULT_SPEAKER
-
-        return speaker
-
     def queue_player(self, message: discord.Message):
         voice_client: Union[discord.VoiceClient, None] = message.guild.voice_client
         if voice_client is None:
@@ -144,4 +112,4 @@ class TTSCommands(commands.Cog, Observ.Observer):
 
 
 async def setup(bot):
-    await bot.add_cog(TTSCommands(bot))
+    await bot.add_cog(TTSCore(bot))
