@@ -30,6 +30,18 @@ class SynthesisErrors(peewee.Model):
         primary_key = peewee.CompositeKey('speaker', 'text')
 
 
+class SoundCache(peewee.Model):
+    text = peewee.TextField()
+    speaker = peewee.CharField()
+    audio = peewee.BlobField()
+    usages = peewee.IntegerField(default=1)
+
+    class Meta:
+        database = database
+        primary_key = peewee.CompositeKey('speaker', 'text')
+
+
 Prefix.create_table()
 Speaker.create_table()
 SynthesisErrors.create_table()
+SoundCache.create_table()
