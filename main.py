@@ -9,6 +9,8 @@ from DynamicCommandPrefix import dynamic_command_prefix
 import Observ
 
 
+logger.add('offlineTTSBot.log', backtrace=True, diagnose=False, rotation='5MB')
+
 """
 while msg := input('$ '):
     start = time.time()
