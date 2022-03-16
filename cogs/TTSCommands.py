@@ -79,7 +79,7 @@ class TTSCommands(commands.Cog, Observ.Observer):
             voice_client.play(sound_source)
 
         except Exception as synth_exception:
-            logger.warning(f'Exception on synthesize {message.content!r}: {synth_exception}', exc_info=synth_exception)
+            logger.opt(exception=True).warning(f'Exception on synthesize {message.content!r}: {synth_exception}')
             await message.channel.send(f'Internal error')
             DB.SynthesisErrors.create(speaker=speaker.value, text=message.content)
 
