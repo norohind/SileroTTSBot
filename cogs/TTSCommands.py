@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
+import asyncio
 import subprocess
-
+import time
+from collections import defaultdict
 from discord.ext import commands
 from discord.ext.commands import Context
 import discord
@@ -22,6 +24,7 @@ class TTSCommands(commands.Cog, Observ.Observer):
         self.cog_command_error = cogErrorHandlers.missing_argument_handler
         self.bot.subscribe(self)  # subscribe for messages that aren't commands
         self.tts = TTSSileroCached()
+        self.tts_queues: dict[int, list[discord.AudioSource]] = defaultdict(list)
 
     @commands.command('exit')
     async def leave_voice(self, ctx: Context):
@@ -76,7 +79,14 @@ class TTSCommands(commands.Cog, Observ.Observer):
         try:
             wav_file_like_object = self.tts.synthesize_text(message.content, speaker=speaker)
             sound_source = FFmpegPCMAudio(wav_file_like_object, pipe=True, stderr=subprocess.PIPE)
-            voice_client.play(sound_source)
+            if voice_client.is_playing():
+                # Then we need to enqueue prepared sound for playing through self.tts_queues mechanism
+
+                self.tts_queues[message.guild.id].append(sound_source)
+                await message.channel.send(f"Enqueued for play, queue size: {len(self.tts_queues[message.guild.id])}")
+                return
+
+            voice_client.play(sound_source, after=lambda e: self.queue_player(message))
 
         except Exception as synth_exception:
             logger.opt(exception=True).warning(f'Exception on synthesize {message.content!r}: {synth_exception}')
@@ -113,6 +123,24 @@ class TTSCommands(commands.Cog, Observ.Observer):
             speaker = self.DEFAULT_SPEAKER
 
         return speaker
+
+    def queue_player(self, message: discord.Message):
+        voice_client: Union[discord.VoiceClient, None] = message.guild.voice_client
+        if voice_client is None:
+            # don't play anything and clear queue for whole guild
+            del self.tts_queues[message.guild.id]
+            return
+
+        for sound_source in self.tts_queues[message.guild.id]:
+            voice_client.play(sound_source)
+            while voice_client.is_playing():
+                time.sleep(0.1)
+
+        try:
+            del self.tts_queues[message.guild.id]
+
+        except KeyError:
+            pass
 
 
 async def setup(bot):
