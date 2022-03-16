@@ -35,6 +35,9 @@ class DiscordTTSBot(commands.Bot, Observ.Subject):
         logger.debug('Bot is ready')
 
     async def on_message(self, message: discord.Message) -> None:
+        if message.guild is None:
+            return
+
         await super(DiscordTTSBot, self).on_message(message)
         if message.author.bot:  # because on_command_error will not be called if author is bot
             # so it isn't a command, so, pass it next
