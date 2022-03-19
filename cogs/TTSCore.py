@@ -53,7 +53,7 @@ class TTSCore(commands.Cog, Observ.Observer):
         if not isinstance(message.channel, discord.TextChannel):
             return
 
-        logger.info(f'Message: {message.content}')
+        logger.info(f'Message to say: {message.content}')
         user_voice_state = message.author.voice
         if user_voice_state is None:
             await message.channel.send(f"You're not in a voice channel")
