@@ -32,7 +32,7 @@ class DiscordTTSBot(commands.Bot, Observ.Subject):
         asyncio.create_task(self.close())
 
     async def on_ready(self):
-        logger.debug('Bot is ready')
+        logger.debug(f'Bot is ready: {self.user.name}')
 
     async def on_message(self, message: discord.Message) -> None:
         if message.guild is None:
