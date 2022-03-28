@@ -110,6 +110,14 @@ class TTSCore(commands.Cog, Observ.Observer):
         except KeyError:
             pass
 
+    @commands.Cog.listener()
+    async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+        if after.channel is None:
+            members = before.channel.members
+            if len(members) == 1:
+                if members[0].id == self.bot.user.id:
+                    await before.channel.guild.voice_client.disconnect(force=False)
+
 
 async def setup(bot):
     await bot.add_cog(TTSCore(bot))
