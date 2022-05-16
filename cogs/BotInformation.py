@@ -20,7 +20,7 @@ License: `GNU GENERAL PUBLIC LICENSE Version 3`
 Author discord: `a31#6403`
 Author email: `a31@demb.design`
 Source code on github: <https://github.com/norohind/SileroTTSBot>
-Source code on gitea's a31 instance: <https://gitea.demb.design/a31/SileroTTSBot>
+Source code on gitea a31's instance: <https://gitea.demb.design/a31/SileroTTSBot>
 Invite link: https://discord.com/oauth2/authorize?client_id={self.bot.user.id}&scope=bot%20applications.commands 
         """
 
