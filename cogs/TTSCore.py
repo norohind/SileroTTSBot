@@ -6,7 +6,7 @@ from discord.ext import commands
 from discord.ext.commands import Context
 import discord
 import DB
-from typing import Union
+from typing import Union, Optional
 from loguru import logger
 from TTSSilero import TTSSileroCached
 from TTSSilero import Speakers
@@ -93,7 +93,7 @@ class TTSCore(commands.Cog, Observ.Observer):
             DB.SynthesisErrors.create(speaker=speaker.value, text=message.content)
 
     def queue_player(self, message: discord.Message):
-        voice_client: Union[discord.VoiceClient, None] = message.guild.voice_client
+        voice_client: Optional[discord.VoiceClient] = message.guild.voice_client
         if voice_client is None:
             # don't play anything and clear queue for whole guild
             del self.tts_queues[message.guild.id]
