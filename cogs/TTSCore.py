@@ -85,6 +85,10 @@ class TTSCore(commands.Cog, Observ.Observer):
         if voice_client is None:
             voice_client: discord.VoiceClient = await user_voice_state.channel.connect()
 
+        if user_voice_state.channel.id != voice_client.channel.id:
+            await message.channel.send('We are in different voice channels')
+            return
+
         speaker: Speakers = self.speakers_adapter.get_speaker(message.guild.id, message.author.id)
 
         # check if message will fail on synthesis
@@ -123,6 +127,9 @@ class TTSCore(commands.Cog, Observ.Observer):
 
     def queue_player(self, message: discord.Message):
         for sound_source in self.tts_queues[message.guild.id]:
+            if len(self.tts_queues[message.guild.id]) == 0:
+                return
+
             voice_client: Optional[discord.VoiceClient] = message.guild.voice_client
             if voice_client is None:
                 # don't play anything and clear queue for whole guild
