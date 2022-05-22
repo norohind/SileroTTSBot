@@ -25,8 +25,29 @@ class TTSCore(commands.Cog, Observ.Observer):
         self.tts_queues: dict[int, list[discord.AudioSource]] = defaultdict(list)
         self.speakers_adapter: SpeakersSettingsAdapterDiscord = speakers_settings_adapter
 
+    @commands.command('drop')
+    async def drop_queue(self, ctx: Context):
+        """
+        Drop tts queue for current server
+
+        :param ctx:
+        :return:
+        """
+        try:
+            del self.tts_queues[ctx.guild.id]
+            await ctx.send('Queue dropped')
+
+        except KeyError:
+            await ctx.send('Failed on dropping queue')
+
     @commands.command('exit')
     async def leave_voice(self, ctx: Context):
+        """
+        Disconnect bot from current channel, it also drop messages queue
+
+        :param ctx:
+        :return:
+        """
         if ctx.guild.voice_client is not None:
             await ctx.guild.voice_client.disconnect(force=False)
             await ctx.channel.send(f"Left voice channel")
