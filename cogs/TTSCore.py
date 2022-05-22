@@ -101,14 +101,18 @@ class TTSCore(commands.Cog, Observ.Observer):
                 return
 
     def queue_player(self, message: discord.Message):
-        voice_client: Optional[discord.VoiceClient] = message.guild.voice_client
-        if voice_client is None:
-            # don't play anything and clear queue for whole guild
-            del self.tts_queues[message.guild.id]
-            return
-
         for sound_source in self.tts_queues[message.guild.id]:
-            voice_client.play(sound_source)
+            voice_client: Optional[discord.VoiceClient] = message.guild.voice_client
+            if voice_client is None:
+                # don't play anything and clear queue for whole guild
+                break
+
+            try:
+                voice_client.play(sound_source)
+
+            except discord.errors.ClientException:  # Here we expect Not connected to voice
+                break
+
             while voice_client.is_playing():
                 time.sleep(0.1)
 
