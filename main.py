@@ -66,6 +66,7 @@ async def main():
 
     await discord_client.start(os.environ['DISCORD_TOKEN'])
 
-loop = asyncio.new_event_loop()
-loop.run_until_complete(main())
-logger.debug('Shutdown completed')
+if __name__ == '__main__':
+    loop = asyncio.new_event_loop()
+    loop.run_until_complete(main())
+    logger.debug('Shutdown completed')
