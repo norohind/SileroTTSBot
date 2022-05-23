@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
+import asyncio
+import time
 from formatting import format_table
 from discord.ext import commands
 from discord.ext.commands import Context
 import rfoo
 from rfoo.utils import rconsole
 from threading import Thread
-from typing import Optional
+from typing import Optional, Coroutine
 from loguru import logger
 
 
@@ -32,7 +34,7 @@ class BotManagement(commands.Cog):
     @commands.command('rfooStart')
     async def start(self, ctx: Context):
         if self.rfoo_server_thread is None:
-            self.rfoo_server = rfoo.InetServer(rconsole.ConsoleHandler, {'bot': self.bot})
+            self.rfoo_server = rfoo.InetServer(rconsole.ConsoleHandler, {'bot': self.bot, 'ct': self.ct})
             self.rfoo_server_thread = Thread(target=lambda: self.rfoo_server.start(rfoo.LOOPBACK, 54321))
             self.rfoo_server_thread.daemon = True
             self.rfoo_server_thread.start()
@@ -53,6 +55,26 @@ class BotManagement(commands.Cog):
 
         else:
             await ctx.send('Rfoo server already stopped')
+
+    def ct(self, coro: Coroutine, timeout=5):
+        """
+        ct - short from create_task
+        execute coroutine and get result
+        """
+
+        task = self.bot.loop.create_task(coro)
+        time.sleep(timeout)
+
+        try:
+            return task.result()
+
+        except asyncio.exceptions.InvalidStateError:
+            exp = task.exception()
+            if exp is None:
+                return task
+
+            else:
+                return exp
 
 
 async def setup(bot):
