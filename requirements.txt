@@ -12,3 +12,5 @@ git+https://github.com/Rapptz/discord.py.git#egg=discord-py
 loguru~=0.6.0
 peewee~=3.14.10
 PyNaCl
+cython
+git+https://github.com/aaiyer/rfoo.git
