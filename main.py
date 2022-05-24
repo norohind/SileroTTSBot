@@ -49,7 +49,7 @@ class DiscordTTSBot(commands.Bot, Observ.Subject):
             await self.notify(ctx.message)
 
         else:
-            raise exception
+            logger.opt(exception=exception).warning(f'Global error caught:')
 
 
 intents = discord.Intents.default()
