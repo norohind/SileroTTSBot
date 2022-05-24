@@ -56,25 +56,21 @@ class BotManagement(commands.Cog):
         else:
             await ctx.send('Rfoo server already stopped')
 
-    def ct(self, coro: Coroutine, timeout=5):
+    def ct(self, coro: Coroutine):
         """
         ct - short from create_task
         execute coroutine and get result
         """
 
         task = self.bot.loop.create_task(coro)
-        time.sleep(timeout)
+        while not task.done():
+            time.sleep(0.1)
 
         try:
             return task.result()
 
         except asyncio.exceptions.InvalidStateError:
-            exp = task.exception()
-            if exp is None:
-                return task
-
-            else:
-                return exp
+            return task.exception()
 
 
 async def setup(bot):
