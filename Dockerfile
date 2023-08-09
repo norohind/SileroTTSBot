@@ -18,7 +18,8 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-RUN useradd -ms /bin/bash silero_user
+RUN useradd -ms /bin/bash silero_user &&  \
+    apt update && apt install ffmpeg -y --no-install-recommends && apt clean && rm -rf /var/lib/apt/lists/* \
 USER silero_user
 
 WORKDIR /app
