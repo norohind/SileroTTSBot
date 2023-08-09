@@ -1,7 +1,9 @@
 import contextlib
-import os
 import io
+import os
 import wave
+from pathlib import Path
+
 import torch.package
 
 from .Speakers import Speakers
@@ -12,12 +14,12 @@ class TTSSilero:
     def __init__(self, threads: int = 12):
         device = torch.device('cpu')
         torch.set_num_threads(threads)
-        local_file = 'model_multi.pt'
+        local_file = Path(os.getenv('DATA_DIR', '.')) / 'model_multi.pt'
 
         if not os.path.isfile(local_file):
             torch.hub.download_url_to_file(
                 'https://models.silero.ai/models/tts/multi/v2_multi.pt',
-                local_file
+                str(local_file)
             )
 
         self.model: TTSModelMulti_v2 = torch.package.PackageImporter(local_file).load_pickle("tts_models", "model")

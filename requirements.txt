@@ -2,7 +2,4 @@ discord-py
 loguru~=0.6.0
 peewee~=3.14.10
 PyNaCl
-Cython
-torch
-numpy
 git+https://github.com/aaiyer/rfoo.git

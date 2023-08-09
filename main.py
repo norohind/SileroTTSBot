@@ -8,8 +8,10 @@ from loguru import logger
 from DynamicCommandPrefix import dynamic_command_prefix
 import Observ
 
+LOG_FILE_ENABLED = os.getenv('LOG_FILE_ENABLED', 'true').lower() == 'true'
 
-logger.add('offlineTTSBot.log', backtrace=True, diagnose=False, rotation='5MB')
+if LOG_FILE_ENABLED:
+    logger.add('offlineTTSBot.log', backtrace=True, diagnose=False, rotation='5MB')
 
 """
 while msg := input('$ '):

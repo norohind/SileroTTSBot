@@ -1,8 +1,11 @@
+import os
 from datetime import datetime
+from pathlib import Path
 
 import peewee
 
-database = peewee.SqliteDatabase('voice_cache.sqlite')
+DB_PATH = Path(os.getenv('DATA_DIR', '.')) / 'voice_cache.sqlite'
+database = peewee.SqliteDatabase(str(DB_PATH))
 
 
 class BaseModel(peewee.Model):
